@@ -50,33 +50,71 @@ ORDER BY claim_count DESC
 --a. Which drug (generic_name) had the highest total drug cost?
 
 --The drug Perfenidone had the highest total drug cost at 2,829,147.30
+--OR
+--The drug Insulin Glargine has the highest total cost at $104,264,066.35
 
 SELECT prescription.drug_name, generic_name, total_drug_cost
 FROM drug
 INNER JOIN prescription
 ON drug.drug_name = prescription.drug_name
+ORDER BY total_drug_cost DESC
+
+SELECT drug.generic_name, SUM(prescription.total_drug_cost) AS total_drug_cost
+FROM drug
+INNER JOIN prescription
+ON drug.drug_name = prescription.drug_name
+GROUP BY drug.generic_name
 ORDER BY total_drug_cost DESC
 
 --b. Which drug (generic_name) has the hightest total cost per day? Bonus: Round your cost per day column to 2 decimal places. Google ROUND to see how this works.
 
-SELECT prescription.drug_name, generic_name, total_drug_cost
+--C1 Esterase Inhibitor had the highest total cost per day.
+
+SELECT drug.generic_name, ROUND(SUM(prescription.total_drug_cost) / SUM(prescription.total_day_supply), 2) AS total_cost_per_day
 FROM drug
 INNER JOIN prescription
 ON drug.drug_name = prescription.drug_name
-ORDER BY total_drug_cost DESC
+GROUP BY drug.generic_name
+ORDER BY total_cost_per_day DESC;
 
 --4. 
 
 --a. For each drug in the drug table, return the drug name and then a column named 'drug_type' which says 'opioid' for drugs which have opioid_drug_flag = 'Y', says 'antibiotic' for those drugs which have antibiotic_drug_flag = 'Y', and says 'neither' for all other drugs. Hint: You may want to use a CASE expression for this. See https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-case/
 
+SELECT drug_name,
+	CASE WHEN opioid_drug_flag = 'Y' THEN 'opioid'
+		 WHEN antibiotic_drug_flag = 'Y' THEN 'antibiotic'
+		 ELSE 'neither' 
+	END AS drug_type
+FROM drug;
+
 --b. Building off of the query you wrote for part a, determine whether more was spent (total_drug_cost) on opioids or on antibiotics. Hint: Format the total costs as MONEY for easier comparision.
 
-SELECT
-FROM
+--More money was spent on opioids than were spent on antibiotics.
+
+SELECT SUM(total_drug_cost) AS total_drug_cost,
+	CASE WHEN opioid_drug_flag = 'Y' THEN 'opioid'
+		 WHEN antibiotic_drug_flag = 'Y' THEN 'antibiotic'
+		 ELSE 'neither' 
+	END AS drug_type
+FROM drug
+INNER JOIN prescription
+ON drug.drug_name = prescription.drug_name
+GROUP BY drug_type
+ORDER BY total_drug_cost DESC;
+
 
 --5. 
 
 --a. How many CBSAs are in Tennessee? Warning: The cbsa table contains information for all states, not just Tennessee.
+
+--There are 42 CBSA's in Tennessee.
+
+SELECT COUNT(*)
+FROM cbsa
+INNER JOIN fips_county
+USING (fipscounty)
+WHERE state LIKE '%TN'
 
 --b. Which cbsa has the largest combined population? Which has the smallest? Report the CBSA name and total population.
 
